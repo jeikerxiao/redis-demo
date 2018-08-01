@@ -4,6 +4,7 @@ import redis.clients.jedis.ZParams;
 import java.util.*;
 
 public class Chapter01 {
+
     private static final int ONE_WEEK_IN_SECONDS = 7 * 86400;
     private static final int VOTE_SCORE = 432;
     private static final int ARTICLES_PER_PAGE = 25;
@@ -16,7 +17,7 @@ public class Chapter01 {
         // redis 连接
         Jedis conn = new Jedis("localhost");
         // redis 数据库
-        conn.select(15);
+        conn.select(1);
         // 发布文章
         String articleId = postArticle(
                 conn, "username", "A title", "http://www.google.com");
