@@ -15,7 +15,7 @@ public class Chapter01 {
 
     public void run() {
         // redis 连接
-        Jedis conn = new Jedis("localhost");
+        Jedis conn = new Jedis("192.168.234.84", 6379);
         // redis 数据库
         conn.select(1);
         // 发布文章

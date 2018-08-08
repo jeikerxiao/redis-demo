@@ -14,8 +14,8 @@ public class Chapter04 {
     }
 
     public void run() {
-        Jedis conn = new Jedis("localhost");
-        conn.select(15);
+        Jedis conn = new Jedis("192.168.234.84", 6379);
+        conn.select(1);
 
         testListItem(conn, false);
         testPurchaseItem(conn);

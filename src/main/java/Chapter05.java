@@ -36,8 +36,8 @@ public class Chapter05 {
     public void run()
         throws InterruptedException
     {
-        Jedis conn = new Jedis("localhost");
-        conn.select(15);
+        Jedis conn = new Jedis("192.168.234.84", 6379);
+        conn.select(1);
 
         testLogRecent(conn);
         testLogCommon(conn);
