@@ -19,8 +19,8 @@ public class Chapter01 {
         // redis 数据库
         conn.select(1);
         // 发布文章
-        String articleId = postArticle(
-                conn, "username", "A title", "http://www.google.com");
+        String articleId = postArticle(conn, "username", "A title", "http://www.google.com");
+        // 打印发布的文章
         System.out.println("We posted a new article with id: " + articleId);
         System.out.println("Its HASH looks like:");
         Map<String, String> articleData = conn.hgetAll("article:" + articleId);
@@ -34,14 +34,15 @@ public class Chapter01 {
         String votes = conn.hget("article:" + articleId, "votes");
         System.out.println("We voted for the article, it now has votes: " + votes);
         assert Integer.parseInt(votes) > 1;
-
+        // 获取最高评分的文章
         System.out.println("The currently highest-scoring articles are:");
         List<Map<String, String>> articles = getArticles(conn, 1);
         printArticles(articles);
         assert articles.size() >= 1;
-
+        // 添加文章到分组
         addGroups(conn, articleId, new String[]{"new-group"});
         System.out.println("We added the article to a new group, other articles include:");
+        // 获取整页分组的文章
         articles = getGroupArticles(conn, "new-group", 1);
         printArticles(articles);
         assert articles.size() >= 1;
