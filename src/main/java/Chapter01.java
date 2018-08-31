@@ -15,7 +15,7 @@ public class Chapter01 {
 
     public void run() {
         // redis 连接
-        Jedis conn = new Jedis("192.168.234.84", 6379);
+        Jedis conn = new Jedis("192.168.99.100", 32768);
         // redis 数据库
         conn.select(1);
         // 发布文章
@@ -33,7 +33,7 @@ public class Chapter01 {
         articleVote(conn, "other_user", "article:" + articleId);
         String votes = conn.hget("article:" + articleId, "votes");
         System.out.println("We voted for the article, it now has votes: " + votes);
-        assert Integer.parseInt(votes) > 1;
+        assert Integer.parseInt(votes) < 1;
         // 获取最高评分的文章
         System.out.println("The currently highest-scoring articles are:");
         List<Map<String, String>> articles = getArticles(conn, 1);
