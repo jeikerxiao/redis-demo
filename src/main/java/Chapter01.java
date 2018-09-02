@@ -106,7 +106,7 @@ public class Chapter01 {
     }
 
     /**
-     * 获取文章
+     * 获取文章(根据评分排序)
      * @param conn
      * @param page
      * @return
@@ -116,7 +116,7 @@ public class Chapter01 {
     }
 
     /**
-     * 获取文章
+     * 获取文章(可选择排序项)
      * @param conn
      * @param page
      * @return
@@ -150,7 +150,7 @@ public class Chapter01 {
     }
 
     /**
-     * 获取整页的文章
+     * 获取整页的文章（根据评分排序）
      * @param conn
      * @param group
      * @param page
@@ -161,7 +161,7 @@ public class Chapter01 {
     }
 
     /**
-     * 获取整页的文章
+     * 获取整页的文章（可选择排序项）
      * @param conn
      * @param group
      * @param page
