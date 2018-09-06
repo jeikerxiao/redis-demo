@@ -85,8 +85,9 @@ public class Chapter01 {
 
     /**
      * 为文章投票功能
+     *
      * @param conn
-     * @param user 投票的用户
+     * @param user    投票的用户
      * @param article 被投票的文章
      */
     public void articleVote(Jedis conn, String user, String article) {
@@ -107,6 +108,7 @@ public class Chapter01 {
 
     /**
      * 获取文章(根据评分排序)
+     *
      * @param conn
      * @param page
      * @return
@@ -117,6 +119,7 @@ public class Chapter01 {
 
     /**
      * 获取文章(可选择排序项)
+     *
      * @param conn
      * @param page
      * @return
@@ -138,6 +141,7 @@ public class Chapter01 {
 
     /**
      * 添加文章到分组中
+     *
      * @param conn
      * @param articleId
      * @param toAdd
@@ -151,6 +155,7 @@ public class Chapter01 {
 
     /**
      * 获取整页的文章（根据评分排序）
+     *
      * @param conn
      * @param group
      * @param page
@@ -162,6 +167,7 @@ public class Chapter01 {
 
     /**
      * 获取整页的文章（可选择排序项）
+     *
      * @param conn
      * @param group
      * @param page
@@ -180,6 +186,7 @@ public class Chapter01 {
 
     /**
      * 打印文章
+     *
      * @param articles
      */
     private void printArticles(List<Map<String, String>> articles) {

@@ -11,15 +11,11 @@ public class Chapter08 {
     private static int POSTS_PER_PASS = 1000;
     private static int REFILL_USERS_STEP = 50;
 
-    public static final void main(String[] args)
-        throws InterruptedException
-    {
+    public static final void main(String[] args) throws InterruptedException {
         new Chapter08().run();
     }
 
-    public void run()
-        throws InterruptedException
-    {
+    public void run() throws InterruptedException {
         Jedis conn = new Jedis("192.168.234.84", 6379);
         conn.select(1);
         conn.flushDB();
@@ -74,9 +70,7 @@ public class Chapter08 {
         assert "0".equals(conn.hget("user:2", "followers"));
     }
 
-    public void testSyndicateStatus(Jedis conn)
-        throws InterruptedException
-    {
+    public void testSyndicateStatus(Jedis conn) throws InterruptedException {
         System.out.println("\n----- testSyndicateStatus -----");
 
         assert createUser(conn, "TestUser", "Test User") == 1;
@@ -88,7 +82,7 @@ public class Chapter08 {
         assert postStatus(conn, 2, "this is some message content") == 1;
         assert getStatusMessages(conn, 1).size() == 1;
 
-        for(int i = 3; i < 11; i++) {
+        for (int i = 3; i < 11; i++) {
             assert createUser(conn, "TestUser" + i, "Test User" + i) == i;
             followUser(conn, i, 2);
         }
@@ -103,9 +97,7 @@ public class Chapter08 {
         assert getStatusMessages(conn, 1).size() == 0;
     }
 
-    public void testRefillTimeline(Jedis conn)
-        throws InterruptedException
-    {
+    public void testRefillTimeline(Jedis conn) throws InterruptedException {
         System.out.println("\n----- testRefillTimeline -----");
 
         assert createUser(conn, "TestUser", "Test User") == 1;
@@ -128,13 +120,13 @@ public class Chapter08 {
         assert getStatusMessages(conn, 1).size() < 5;
 
         refillTimeline(conn, "following:1", "home:1");
-        List<Map<String,String>> messages = getStatusMessages(conn, 1);
+        List<Map<String, String>> messages = getStatusMessages(conn, 1);
         assert messages.size() == 5;
-        for (Map<String,String> message : messages) {
+        for (Map<String, String> message : messages) {
             assert "3".equals(message.get("uid"));
         }
 
-        long statusId = Long.valueOf(messages.get(messages.size() -1).get("id"));
+        long statusId = Long.valueOf(messages.get(messages.size() - 1).get("id"));
         assert deleteStatus(conn, 3, statusId);
         assert getStatusMessages(conn, 1).size() == 4;
         assert conn.zcard("home:1") == 5;
@@ -142,9 +134,7 @@ public class Chapter08 {
         assert conn.zcard("home:1") == 4;
     }
 
-    public String acquireLockWithTimeout(
-        Jedis conn, String lockName, int acquireTimeout, int lockTimeout)
-    {
+    public String acquireLockWithTimeout(Jedis conn, String lockName, int acquireTimeout, int lockTimeout) {
         String id = UUID.randomUUID().toString();
         lockName = "lock:" + lockName;
 
@@ -153,13 +143,13 @@ public class Chapter08 {
             if (conn.setnx(lockName, id) >= 1) {
                 conn.expire(lockName, lockTimeout);
                 return id;
-            }else if (conn.ttl(lockName) <= 0){
+            } else if (conn.ttl(lockName) <= 0) {
                 conn.expire(lockName, lockTimeout);
             }
 
-            try{
+            try {
                 Thread.sleep(1);
-            }catch(InterruptedException ie){
+            } catch (InterruptedException ie) {
                 Thread.interrupted();
             }
         }
@@ -177,7 +167,7 @@ public class Chapter08 {
                 List<Object> result = trans.exec();
                 // null response indicates that the transaction was aborted due
                 // to the watched key changing.
-                if (result == null){
+                if (result == null) {
                     continue;
                 }
                 return true;
@@ -193,7 +183,7 @@ public class Chapter08 {
     public long createUser(Jedis conn, String login, String name) {
         String llogin = login.toLowerCase();
         String lock = acquireLockWithTimeout(conn, "user:" + llogin, 10, 1);
-        if (lock == null){
+        if (lock == null) {
             return -1;
         }
 
@@ -204,7 +194,7 @@ public class Chapter08 {
         long id = conn.incr("user:id:");
         Transaction trans = conn.multi();
         trans.hset("users:", llogin, String.valueOf(id));
-        Map<String,String> values = new HashMap<String,String>();
+        Map<String, String> values = new HashMap<String, String>();
         values.put("login", login);
         values.put("id", String.valueOf(id));
         values.put("name", name);
@@ -237,15 +227,15 @@ public class Chapter08 {
         trans.zrevrangeWithScores("profile:" + otherUid, 0, HOME_TIMELINE_SIZE - 1);
 
         List<Object> response = trans.exec();
-        long following = (Long)response.get(response.size() - 3);
-        long followers = (Long)response.get(response.size() - 2);
-        Set<Tuple> statuses = (Set<Tuple>)response.get(response.size() - 1);
+        long following = (Long) response.get(response.size() - 3);
+        long followers = (Long) response.get(response.size() - 2);
+        Set<Tuple> statuses = (Set<Tuple>) response.get(response.size() - 1);
 
         trans = conn.multi();
         trans.hset("user:" + uid, "following", String.valueOf(following));
         trans.hset("user:" + otherUid, "followers", String.valueOf(followers));
         if (statuses.size() > 0) {
-            for (Tuple status : statuses){
+            for (Tuple status : statuses) {
                 trans.zadd("home:" + uid, status.getScore(), status.getElement());
             }
         }
@@ -272,14 +262,14 @@ public class Chapter08 {
         trans.zrevrange("profile:" + otherUid, 0, HOME_TIMELINE_SIZE - 1);
 
         List<Object> response = trans.exec();
-        long following = (Long)response.get(response.size() - 3);
-        long followers = (Long)response.get(response.size() - 2);
-        Set<String> statuses = (Set<String>)response.get(response.size() - 1);
+        long following = (Long) response.get(response.size() - 3);
+        long followers = (Long) response.get(response.size() - 2);
+        Set<String> statuses = (Set<String>) response.get(response.size() - 1);
 
         trans = conn.multi();
         trans.hset("user:" + uid, "following", String.valueOf(following));
         trans.hset("user:" + otherUid, "followers", String.valueOf(followers));
-        if (statuses.size() > 0){
+        if (statuses.size() > 0) {
             for (String status : statuses) {
                 trans.zrem("home:" + uid, status);
             }
@@ -292,23 +282,22 @@ public class Chapter08 {
     public long createStatus(Jedis conn, long uid, String message) {
         return createStatus(conn, uid, message, null);
     }
-    public long createStatus(
-        Jedis conn, long uid, String message, Map<String,String> data)
-    {
+
+    public long createStatus(Jedis conn, long uid, String message, Map<String, String> data) {
         Transaction trans = conn.multi();
         trans.hget("user:" + uid, "login");
         trans.incr("status:id:");
 
         List<Object> response = trans.exec();
-        String login = (String)response.get(0);
-        long id = (Long)response.get(1);
+        String login = (String) response.get(0);
+        long id = (Long) response.get(1);
 
         if (login == null) {
             return -1;
         }
 
-        if (data == null){
-            data = new HashMap<String,String>();
+        if (data == null) {
+            data = new HashMap<String, String>();
         }
         data.put("message", message);
         data.put("posted", String.valueOf(System.currentTimeMillis()));
@@ -326,11 +315,10 @@ public class Chapter08 {
     public long postStatus(Jedis conn, long uid, String message) {
         return postStatus(conn, uid, message, null);
     }
-    public long postStatus(
-        Jedis conn, long uid, String message, Map<String,String> data)
-    {
+
+    public long postStatus(Jedis conn, long uid, String message, Map<String, String> data) {
         long id = createStatus(conn, uid, message, data);
-        if (id == -1){
+        if (id == -1) {
             return -1;
         }
 
@@ -346,31 +334,29 @@ public class Chapter08 {
         return id;
     }
 
-    public void syndicateStatus(
-        Jedis conn, long uid, long postId, long postTime, double start)
-    {
+    public void syndicateStatus(Jedis conn, long uid, long postId, long postTime, double start) {
         Set<Tuple> followers = conn.zrangeByScoreWithScores(
-            "followers:" + uid,
-            String.valueOf(start), "inf",
-            0, POSTS_PER_PASS);
+                "followers:" + uid,
+                String.valueOf(start), "inf",
+                0, POSTS_PER_PASS);
 
         Transaction trans = conn.multi();
-        for (Tuple tuple : followers){
+        for (Tuple tuple : followers) {
             String follower = tuple.getElement();
             start = tuple.getScore();
             trans.zadd("home:" + follower, postTime, String.valueOf(postId));
             trans.zrange("home:" + follower, 0, -1);
             trans.zremrangeByRank(
-                "home:" + follower, 0, 0 - HOME_TIMELINE_SIZE - 1);
+                    "home:" + follower, 0, 0 - HOME_TIMELINE_SIZE - 1);
         }
         trans.exec();
 
         if (followers.size() >= POSTS_PER_PASS) {
-            try{
+            try {
                 Method method = getClass().getDeclaredMethod(
-                    "syndicateStatus", Jedis.class, Long.TYPE, Long.TYPE, Long.TYPE, Double.TYPE);
+                        "syndicateStatus", Jedis.class, Long.TYPE, Long.TYPE, Long.TYPE, Double.TYPE);
                 executeLater("default", method, uid, postId, postTime, start);
-            }catch(Exception e){
+            } catch (Exception e) {
                 throw new RuntimeException(e);
             }
         }
@@ -383,7 +369,7 @@ public class Chapter08 {
             return false;
         }
 
-        try{
+        try {
             if (!String.valueOf(uid).equals(conn.hget(key, "uid"))) {
                 return false;
             }
@@ -396,31 +382,29 @@ public class Chapter08 {
             trans.exec();
 
             return true;
-        }finally{
+        } finally {
             releaseLock(conn, key, lock);
         }
     }
 
-    public List<Map<String,String>> getStatusMessages(Jedis conn, long uid) {
+    public List<Map<String, String>> getStatusMessages(Jedis conn, long uid) {
         return getStatusMessages(conn, uid, 1, 30);
     }
 
     @SuppressWarnings("unchecked")
-    public List<Map<String,String>> getStatusMessages(
-        Jedis conn, long uid, int page, int count)
-    {
+    public List<Map<String, String>> getStatusMessages(Jedis conn, long uid, int page, int count) {
         Set<String> statusIds = conn.zrevrange(
-            "home:" + uid, (page - 1) * count, page * count - 1);
+                "home:" + uid, (page - 1) * count, page * count - 1);
 
         Transaction trans = conn.multi();
         for (String id : statusIds) {
             trans.hgetAll("status:" + id);
         }
 
-        List<Map<String,String>> statuses = new ArrayList<Map<String,String>>();
+        List<Map<String, String>> statuses = new ArrayList<Map<String, String>>();
         for (Object result : trans.exec()) {
-            Map<String,String> status = (Map<String,String>)result;
-            if (status != null && status.size() > 0){
+            Map<String, String> status = (Map<String, String>) result;
+            if (status != null && status.size() > 0) {
                 statuses.add(status);
             }
         }
@@ -432,28 +416,26 @@ public class Chapter08 {
     }
 
     @SuppressWarnings("unchecked")
-    public void refillTimeline(
-            Jedis conn, String incoming, String timeline, double start)
-    {
+    public void refillTimeline(Jedis conn, String incoming, String timeline, double start) {
         if (start == 0 && conn.zcard(timeline) >= 750) {
             return;
         }
 
         Set<Tuple> users = conn.zrangeByScoreWithScores(
-            incoming, String.valueOf(start), "inf", 0, REFILL_USERS_STEP);
+                incoming, String.valueOf(start), "inf", 0, REFILL_USERS_STEP);
 
         Pipeline pipeline = conn.pipelined();
-        for (Tuple tuple : users){
+        for (Tuple tuple : users) {
             String uid = tuple.getElement();
             start = tuple.getScore();
             pipeline.zrevrangeWithScores(
-                "profile:" + uid, 0, HOME_TIMELINE_SIZE - 1);
+                    "profile:" + uid, 0, HOME_TIMELINE_SIZE - 1);
         }
 
         List<Object> response = pipeline.syncAndReturnAll();
         List<Tuple> messages = new ArrayList<Tuple>();
         for (Object results : response) {
-            messages.addAll((Set<Tuple>)results);
+            messages.addAll((Set<Tuple>) results);
         }
 
         Collections.sort(messages);
@@ -469,11 +451,11 @@ public class Chapter08 {
         trans.exec();
 
         if (users.size() >= REFILL_USERS_STEP) {
-            try{
+            try {
                 Method method = getClass().getDeclaredMethod(
-                    "refillTimeline", Jedis.class, String.class, String.class, Double.TYPE);
+                        "refillTimeline", Jedis.class, String.class, String.class, Double.TYPE);
                 executeLater("default", method, incoming, timeline, start);
-            }catch(Exception e){
+            } catch (Exception e) {
                 throw new RuntimeException(e);
             }
         }
@@ -482,9 +464,8 @@ public class Chapter08 {
     public void cleanTimelines(Jedis conn, long uid, long statusId) {
         cleanTimelines(conn, uid, statusId, 0, false);
     }
-    public void cleanTimelines(
-        Jedis conn, long uid, long statusId, double start, boolean onLists)
-    {
+
+    public void cleanTimelines(Jedis conn, long uid, long statusId, double start, boolean onLists) {
         String key = "followers:" + uid;
         String base = "home:";
         if (onLists) {
@@ -492,7 +473,7 @@ public class Chapter08 {
             base = "list:statuses:";
         }
         Set<Tuple> followers = conn.zrangeByScoreWithScores(
-            key, String.valueOf(start), "inf", 0, POSTS_PER_PASS);
+                key, String.valueOf(start), "inf", 0, POSTS_PER_PASS);
 
         Transaction trans = conn.multi();
         for (Tuple tuple : followers) {
@@ -503,18 +484,18 @@ public class Chapter08 {
         trans.exec();
 
         Method method = null;
-        try{
+        try {
             method = getClass().getDeclaredMethod(
-                "cleanTimelines", Jedis.class,
-                Long.TYPE, Long.TYPE, Double.TYPE, Boolean.TYPE);
-        }catch(Exception e){
+                    "cleanTimelines", Jedis.class,
+                    Long.TYPE, Long.TYPE, Double.TYPE, Boolean.TYPE);
+        } catch (Exception e) {
             throw new RuntimeException(e);
         }
 
         if (followers.size() >= POSTS_PER_PASS) {
             executeLater("default", method, uid, statusId, start, onLists);
 
-        }else if (!onLists) {
+        } else if (!onLists) {
             executeLater("default", method, uid, statusId, 0, true);
         }
     }
@@ -524,9 +505,7 @@ public class Chapter08 {
         thread.start();
     }
 
-    public class MethodThread
-        extends Thread
-    {
+    public class MethodThread extends Thread {
         private Object instance;
         private Method method;
         private Object[] args;
@@ -545,9 +524,9 @@ public class Chapter08 {
             System.arraycopy(this.args, 0, args, 1, this.args.length);
             args[0] = conn;
 
-            try{
+            try {
                 method.invoke(instance, args);
-            }catch(Exception e){
+            } catch (Exception e) {
                 throw new RuntimeException(e);
             }
         }

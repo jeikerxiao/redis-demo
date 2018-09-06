@@ -7,15 +7,13 @@ import java.net.URL;
 import java.util.*;
 
 public class Chapter02 {
-    public static final void main(String[] args)
-        throws InterruptedException
-    {
+
+    public static final void main(String[] args) throws InterruptedException {
         new Chapter02().run();
     }
 
-    public void run()
-        throws InterruptedException
-    {
+    public void run() throws InterruptedException {
+
         Jedis conn = new Jedis("192.168.234.84", 6379);
         conn.select(1);
 
@@ -25,9 +23,7 @@ public class Chapter02 {
         testCacheRequest(conn);
     }
 
-    public void testLoginCookies(Jedis conn)
-        throws InterruptedException
-    {
+    public void testLoginCookies(Jedis conn) throws InterruptedException {
         System.out.println("\n----- testLoginCookies -----");
         String token = UUID.randomUUID().toString();
 
@@ -50,7 +46,7 @@ public class Chapter02 {
         Thread.sleep(1000);
         thread.quit();
         Thread.sleep(2000);
-        if (thread.isAlive()){
+        if (thread.isAlive()) {
             throw new RuntimeException("The clean sessions thread is still alive?!?");
         }
 
@@ -59,9 +55,7 @@ public class Chapter02 {
         assert s == 0;
     }
 
-    public void testShopppingCartCookies(Jedis conn)
-        throws InterruptedException
-    {
+    public void testShopppingCartCookies(Jedis conn) throws InterruptedException {
         System.out.println("\n----- testShopppingCartCookies -----");
         String token = UUID.randomUUID().toString();
 
@@ -69,9 +63,9 @@ public class Chapter02 {
         updateToken(conn, token, "username", "itemX");
         System.out.println("And add an item to the shopping cart");
         addToCart(conn, token, "itemY", 3);
-        Map<String,String> r = conn.hgetAll("cart:" + token);
+        Map<String, String> r = conn.hgetAll("cart:" + token);
         System.out.println("Our shopping cart currently has:");
-        for (Map.Entry<String,String> entry : r.entrySet()){
+        for (Map.Entry<String, String> entry : r.entrySet()) {
             System.out.println("  " + entry.getKey() + ": " + entry.getValue());
         }
         System.out.println();
@@ -84,27 +78,25 @@ public class Chapter02 {
         Thread.sleep(1000);
         thread.quit();
         Thread.sleep(2000);
-        if (thread.isAlive()){
+        if (thread.isAlive()) {
             throw new RuntimeException("The clean sessions thread is still alive?!?");
         }
 
         r = conn.hgetAll("cart:" + token);
         System.out.println("Our shopping cart now contains:");
-        for (Map.Entry<String,String> entry : r.entrySet()){
+        for (Map.Entry<String, String> entry : r.entrySet()) {
             System.out.println("  " + entry.getKey() + ": " + entry.getValue());
         }
         assert r.size() == 0;
     }
 
-    public void testCacheRows(Jedis conn)
-        throws InterruptedException
-    {
+    public void testCacheRows(Jedis conn) throws InterruptedException {
         System.out.println("\n----- testCacheRows -----");
         System.out.println("First, let's schedule caching of itemX every 5 seconds");
         scheduleRowCache(conn, "itemX", 5);
         System.out.println("Our schedule looks like:");
         Set<Tuple> s = conn.zrangeWithScores("schedule:", 0, -1);
-        for (Tuple tuple : s){
+        for (Tuple tuple : s) {
             System.out.println("  " + tuple.getElement() + ", " + tuple.getScore());
         }
         assert s.size() != 0;
@@ -139,7 +131,7 @@ public class Chapter02 {
 
         thread.quit();
         Thread.sleep(2000);
-        if (thread.isAlive()){
+        if (thread.isAlive()) {
             throw new RuntimeException("The database caching thread is still alive?!?");
         }
     }
@@ -148,8 +140,8 @@ public class Chapter02 {
         System.out.println("\n----- testCacheRequest -----");
         String token = UUID.randomUUID().toString();
 
-        Callback callback = new Callback(){
-            public String call(String request){
+        Callback callback = new Callback() {
+            public String call(String request) {
                 return "content for " + request;
             }
         };
@@ -202,14 +194,14 @@ public class Chapter02 {
     }
 
     public String cacheRequest(Jedis conn, String request, Callback callback) {
-        if (!canCache(conn, request)){
+        if (!canCache(conn, request)) {
             return callback != null ? callback.call(request) : null;
         }
 
         String pageKey = "cache:" + hashRequest(request);
         String content = conn.get(pageKey);
 
-        if (content == null && callback != null){
+        if (content == null && callback != null) {
             content = callback.call(request);
             conn.setex(pageKey, 300, content);
         }
@@ -220,9 +212,9 @@ public class Chapter02 {
     public boolean canCache(Jedis conn, String request) {
         try {
             URL url = new URL(request);
-            HashMap<String,String> params = new HashMap<String,String>();
-            if (url.getQuery() != null){
-                for (String param : url.getQuery().split("&")){
+            HashMap<String, String> params = new HashMap<String, String>();
+            if (url.getQuery() != null) {
+                for (String param : url.getQuery().split("&")) {
                     String[] pair = param.split("=", 2);
                     params.put(pair[0], pair.length == 2 ? pair[1] : null);
                 }
@@ -234,16 +226,16 @@ public class Chapter02 {
             }
             Long rank = conn.zrank("viewed:", itemId);
             return rank != null && rank < 10000;
-        }catch(MalformedURLException mue){
+        } catch (MalformedURLException mue) {
             return false;
         }
     }
 
-    public boolean isDynamic(Map<String,String> params) {
+    public boolean isDynamic(Map<String, String> params) {
         return params.containsKey("_");
     }
 
-    public String extractItemId(Map<String,String> params) {
+    public String extractItemId(Map<String, String> params) {
         return params.get("item");
     }
 
@@ -252,12 +244,11 @@ public class Chapter02 {
     }
 
     public interface Callback {
-        public String call(String request);
+        String call(String request);
     }
 
     public class CleanSessionsThread
-        extends Thread
-    {
+            extends Thread {
         private Jedis conn;
         private int limit;
         private boolean quit;
@@ -275,10 +266,10 @@ public class Chapter02 {
         public void run() {
             while (!quit) {
                 long size = conn.zcard("recent:");
-                if (size <= limit){
+                if (size <= limit) {
                     try {
                         sleep(1000);
-                    }catch(InterruptedException ie){
+                    } catch (InterruptedException ie) {
                         Thread.currentThread().interrupt();
                     }
                     continue;
@@ -301,8 +292,7 @@ public class Chapter02 {
     }
 
     public class CleanFullSessionsThread
-        extends Thread
-    {
+            extends Thread {
         private Jedis conn;
         private int limit;
         private boolean quit;
@@ -320,10 +310,10 @@ public class Chapter02 {
         public void run() {
             while (!quit) {
                 long size = conn.zcard("recent:");
-                if (size <= limit){
+                if (size <= limit) {
                     try {
                         sleep(1000);
-                    }catch(InterruptedException ie){
+                    } catch (InterruptedException ie) {
                         Thread.currentThread().interrupt();
                     }
                     continue;
@@ -347,8 +337,7 @@ public class Chapter02 {
     }
 
     public class CacheRowsThread
-        extends Thread
-    {
+            extends Thread {
         private Jedis conn;
         private boolean quit;
 
@@ -363,14 +352,14 @@ public class Chapter02 {
 
         public void run() {
             Gson gson = new Gson();
-            while (!quit){
+            while (!quit) {
                 Set<Tuple> range = conn.zrangeWithScores("schedule:", 0, 0);
                 Tuple next = range.size() > 0 ? range.iterator().next() : null;
                 long now = System.currentTimeMillis() / 1000;
-                if (next == null || next.getScore() > now){
+                if (next == null || next.getScore() > now) {
                     try {
                         sleep(50);
-                    }catch(InterruptedException ie){
+                    } catch (InterruptedException ie) {
                         Thread.currentThread().interrupt();
                     }
                     continue;
@@ -397,7 +386,7 @@ public class Chapter02 {
         private String data;
         private long time;
 
-        private Inventory (String id) {
+        private Inventory(String id) {
             this.id = id;
             this.data = "data to cache...";
             this.time = System.currentTimeMillis() / 1000;

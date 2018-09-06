@@ -8,36 +8,35 @@ import java.util.regex.Pattern;
 public class Chapter07 {
     private static final Pattern QUERY_RE = Pattern.compile("[+-]?[a-z']{2,}");
     private static final Pattern WORDS_RE = Pattern.compile("[a-z']{2,}");
-    private static final Set<String> STOP_WORDS = new HashSet<String>();
+    private static final Set<String> STOP_WORDS = new HashSet<>();
+
     static {
         for (String word :
                 ("able about across after all almost also am among " +
-                "an and any are as at be because been but by can " +
-                "cannot could dear did do does either else ever " +
-                "every for from get got had has have he her hers " +
-                "him his how however if in into is it its just " +
-                "least let like likely may me might most must my " +
-                "neither no nor not of off often on only or other " +
-                "our own rather said say says she should since so " +
-                "some than that the their them then there these " +
-                "they this tis to too twas us wants was we were " +
-                "what when where which while who whom why will " +
-                "with would yet you your").split(" "))
-        {
+                        "an and any are as at be because been but by can " +
+                        "cannot could dear did do does either else ever " +
+                        "every for from get got had has have he her hers " +
+                        "him his how however if in into is it its just " +
+                        "least let like likely may me might most must my " +
+                        "neither no nor not of off often on only or other " +
+                        "our own rather said say says she should since so " +
+                        "some than that the their them then there these " +
+                        "they this tis to too twas us wants was we were " +
+                        "what when where which while who whom why will " +
+                        "with would yet you your").split(" ")) {
             STOP_WORDS.add(word);
         }
     }
 
 
-    private static String CONTENT =
-        "this is some random content, look at how it is indexed.";
+    private static String CONTENT = "this is some random content, look at how it is indexed.";
 
 
     public static final void main(String[] args) {
         new Chapter07().run();
     }
 
-    public void run(){
+    public void run() {
         Jedis conn = new Jedis("192.168.234.84", 6379);
         conn.select(1);
         conn.flushDB();
@@ -62,7 +61,7 @@ public class Chapter07 {
         System.out.println("We're tokenizing some content...");
         Set<String> tokens = tokenize(CONTENT);
         System.out.println("Those tokens are: " +
-            Arrays.toString(tokens.toArray()));
+                Arrays.toString(tokens.toArray()));
         assert tokens.size() > 0;
 
         System.out.println("And now we are indexing that content...");
@@ -70,7 +69,7 @@ public class Chapter07 {
         assert count == tokens.size();
         Set<String> test = new HashSet<String>();
         test.add("test");
-        for (String t : tokens){
+        for (String t : tokens) {
             Set<String> members = conn.smembers("idx:" + t);
             assert test.equals(members);
         }
@@ -114,7 +113,7 @@ public class Chapter07 {
         String queryString = "test query without stopwords";
         Query query = parse(queryString);
         String[] words = queryString.split(" ");
-        for (int i = 0; i < words.length; i++){
+        for (int i = 0; i < words.length; i++) {
             List<String> word = new ArrayList<String>();
             word.add(words[i]);
             assert word.equals(query.all.get(i));
@@ -165,7 +164,7 @@ public class Chapter07 {
         indexDocument(conn, "test", CONTENT);
         indexDocument(conn, "test2", CONTENT);
 
-        HashMap<String,String> values = new HashMap<String,String>();
+        HashMap<String, String> values = new HashMap<String, String>();
         values.put("updated", "12345");
         values.put("id", "10");
         conn.hmset("kb:doc:test", values);
@@ -197,7 +196,7 @@ public class Chapter07 {
         conn.zadd("idx:sort:votes", 10, "test");
         conn.zadd("idx:sort:votes", 1, "test2");
 
-        Map<String,Integer> weights = new HashMap<String,Integer>();
+        Map<String, Integer> weights = new HashMap<String, Integer>();
         weights.put("update", 1);
         weights.put("vote", 0);
         SearchResult result = searchAndZsort(conn, "content", false, weights);
@@ -223,19 +222,19 @@ public class Chapter07 {
         }
         List<WordScore> pairs2 = new ArrayList<WordScore>(pairs);
         Collections.sort(pairs);
-        Collections.sort(pairs2, new Comparator<WordScore>(){
-            public int compare(WordScore o1, WordScore o2){
+        Collections.sort(pairs2, new Comparator<WordScore>() {
+            public int compare(WordScore o1, WordScore o2) {
                 long diff = o1.score - o2.score;
                 return diff < 0 ? -1 : diff > 0 ? 1 : 0;
             }
         });
         assert pairs.equals(pairs2);
 
-        Map<Integer,Integer> lower = new HashMap<Integer,Integer>();
+        Map<Integer, Integer> lower = new HashMap<Integer, Integer>();
         lower.put(-1, -1);
-        int start = (int)'a';
-        int end = (int)'z';
-        for (int i = start ; i <= end; i++){
+        int start = (int) 'a';
+        int end = (int) 'z';
+        for (int i = start; i <= end; i++) {
             lower.put(i, i - start);
         }
 
@@ -246,15 +245,15 @@ public class Chapter07 {
         }
         pairs2 = new ArrayList<WordScore>(pairs);
         Collections.sort(pairs);
-        Collections.sort(pairs2, new Comparator<WordScore>(){
-            public int compare(WordScore o1, WordScore o2){
+        Collections.sort(pairs2, new Comparator<WordScore>() {
+            public int compare(WordScore o1, WordScore o2) {
                 long diff = o1.score - o2.score;
                 return diff < 0 ? -1 : diff > 0 ? 1 : 0;
             }
         });
         assert pairs.equals(pairs2);
 
-        Map<String,String> values = new HashMap<String,String>();
+        Map<String, String> values = new HashMap<String, String>();
         values.put("test", "value");
         values.put("test2", "other");
         zaddString(conn, "key", values);
@@ -271,7 +270,7 @@ public class Chapter07 {
         for (int i = 0; i < 100; i++) {
             targetAds(conn, usa, CONTENT);
         }
-        Pair<Long,String> result = targetAds(conn, usa, CONTENT);
+        Pair<Long, String> result = targetAds(conn, usa, CONTENT);
         long targetId = result.getValue0();
         String adId = result.getValue1();
         assert "1".equals(result.getValue1());
@@ -328,9 +327,9 @@ public class Chapter07 {
     public Set<String> tokenize(String content) {
         Set<String> words = new HashSet<String>();
         Matcher matcher = WORDS_RE.matcher(content);
-        while (matcher.find()){
+        while (matcher.find()) {
             String word = matcher.group().trim();
-            if (word.length() > 2 && !STOP_WORDS.contains(word)){
+            if (word.length() > 2 && !STOP_WORDS.contains(word)) {
                 words.add(word);
             }
         }
@@ -347,19 +346,18 @@ public class Chapter07 {
     }
 
     private String setCommon(
-        Transaction trans, String method, int ttl, String... items)
-    {
+            Transaction trans, String method, int ttl, String... items) {
         String[] keys = new String[items.length];
-        for (int i = 0; i < items.length; i++){
+        for (int i = 0; i < items.length; i++) {
             keys[i] = "idx:" + items[i];
         }
 
         String id = UUID.randomUUID().toString();
-        try{
+        try {
             trans.getClass()
-                .getDeclaredMethod(method, String.class, String[].class)
-                .invoke(trans, "idx:" + id, keys);
-        }catch(Exception e){
+                    .getDeclaredMethod(method, String.class, String[].class)
+                    .invoke(trans, "idx:" + id, keys);
+        } catch (Exception e) {
             throw new RuntimeException(e);
         }
         trans.expire("idx:" + id, ttl);
@@ -379,19 +377,18 @@ public class Chapter07 {
     }
 
     private String zsetCommon(
-      Transaction trans, String method, int ttl, ZParams params, String... sets)
-    {
+            Transaction trans, String method, int ttl, ZParams params, String... sets) {
         String[] keys = new String[sets.length];
         for (int i = 0; i < sets.length; i++) {
             keys[i] = "idx:" + sets[i];
         }
 
         String id = UUID.randomUUID().toString();
-        try{
+        try {
             trans.getClass()
-                .getDeclaredMethod(method, String.class, ZParams.class, String[].class)
-                .invoke(trans, "idx:" + id, params, keys);
-        }catch(Exception e){
+                    .getDeclaredMethod(method, String.class, ZParams.class, String[].class)
+                    .invoke(trans, "idx:" + id, params, keys);
+        } catch (Exception e) {
             throw new RuntimeException(e);
         }
         trans.expire("idx:" + id, ttl);
@@ -399,14 +396,12 @@ public class Chapter07 {
     }
 
     public String zintersect(
-      Transaction trans, int ttl, ZParams params, String... sets)
-    {
+            Transaction trans, int ttl, ZParams params, String... sets) {
         return zsetCommon(trans, "zinterstore", ttl, params, sets);
     }
 
     public String zunion(
-      Transaction trans, int ttl, ZParams params, String... sets)
-    {
+            Transaction trans, int ttl, ZParams params, String... sets) {
         return zsetCommon(trans, "zunionstore", ttl, params, sets);
     }
 
@@ -414,7 +409,7 @@ public class Chapter07 {
         Query query = new Query();
         Set<String> current = new HashSet<String>();
         Matcher matcher = QUERY_RE.matcher(queryString.toLowerCase());
-        while (matcher.find()){
+        while (matcher.find()) {
             String word = matcher.group().trim();
             char prefix = word.charAt(0);
             if (prefix == '+' || prefix == '-') {
@@ -437,7 +432,7 @@ public class Chapter07 {
             current.add(word);
         }
 
-        if (!current.isEmpty()){
+        if (!current.isEmpty()) {
             query.all.add(new ArrayList<String>(current));
         }
         return query;
@@ -445,17 +440,17 @@ public class Chapter07 {
 
     public String parseAndSearch(Jedis conn, String queryString, int ttl) {
         Query query = parse(queryString);
-        if (query.all.isEmpty()){
+        if (query.all.isEmpty()) {
             return null;
         }
 
-        List<String> toIntersect = new ArrayList<String>();
+        List<String> toIntersect = new ArrayList<>();
         for (List<String> syn : query.all) {
             if (syn.size() > 1) {
                 Transaction trans = conn.multi();
                 toIntersect.add(union(trans, ttl, syn.toArray(new String[syn.size()])));
                 trans.exec();
-            }else{
+            } else {
                 toIntersect.add(syn.get(0));
             }
         }
@@ -464,15 +459,15 @@ public class Chapter07 {
         if (toIntersect.size() > 1) {
             Transaction trans = conn.multi();
             intersectResult = intersect(
-                trans, ttl, toIntersect.toArray(new String[toIntersect.size()]));
+                    trans, ttl, toIntersect.toArray(new String[toIntersect.size()]));
             trans.exec();
-        }else{
+        } else {
             intersectResult = toIntersect.get(0);
         }
 
         if (!query.unwanted.isEmpty()) {
             String[] keys = query.unwanted
-                .toArray(new String[query.unwanted.size() + 1]);
+                    .toArray(new String[query.unwanted.size() + 1]);
             keys[keys.length - 1] = intersectResult;
             Transaction trans = conn.multi();
             intersectResult = difference(trans, ttl, keys);
@@ -483,10 +478,9 @@ public class Chapter07 {
     }
 
     @SuppressWarnings("unchecked")
-    public SearchResult searchAndSort(Jedis conn, String queryString, String sort)
-    {
+    public SearchResult searchAndSort(Jedis conn, String queryString, String sort) {
         boolean desc = sort.startsWith("-");
-        if (desc){
+        if (desc) {
             sort = sort.substring(1);
         }
         boolean alpha = !"updated".equals(sort) && !"id".equals(sort);
@@ -500,7 +494,7 @@ public class Chapter07 {
         if (desc) {
             params.desc();
         }
-        if (alpha){
+        if (alpha) {
             params.alpha();
         }
         params.by(by);
@@ -509,15 +503,14 @@ public class Chapter07 {
         List<Object> results = trans.exec();
 
         return new SearchResult(
-            id,
-            ((Long)results.get(0)).longValue(),
-            (List<String>)results.get(1));
+                id,
+                ((Long) results.get(0)).longValue(),
+                (List<String>) results.get(1));
     }
 
     @SuppressWarnings("unchecked")
     public SearchResult searchAndZsort(
-        Jedis conn, String queryString, boolean desc, Map<String,Integer> weights)
-    {
+            Jedis conn, String queryString, boolean desc, Map<String, Integer> weights) {
         int ttl = 300;
         int start = 0;
         int num = 20;
@@ -529,21 +522,21 @@ public class Chapter07 {
         String[] keys = new String[]{id, "sort:update", "sort:votes"};
         Transaction trans = conn.multi();
         id = zintersect(
-            trans, ttl, new ZParams().weights(0, updateWeight, voteWeight), keys);
+                trans, ttl, new ZParams().weights(0, updateWeight, voteWeight), keys);
 
         trans.zcard("idx:" + id);
         if (desc) {
             trans.zrevrange("idx:" + id, start, start + num - 1);
-        }else{
+        } else {
             trans.zrange("idx:" + id, start, start + num - 1);
         }
         List<Object> results = trans.exec();
 
         return new SearchResult(
-            id,
-            ((Long)results.get(results.size() - 2)).longValue(),
-            // Note: it's a LinkedHashSet, so it's ordered
-            new ArrayList<String>((Set<String>)results.get(results.size() - 1)));
+                id,
+                ((Long) results.get(results.size() - 2)).longValue(),
+                // Note: it's a LinkedHashSet, so it's ordered
+                new ArrayList<String>((Set<String>) results.get(results.size() - 1)));
     }
 
     public long stringToScore(String string) {
@@ -551,15 +544,15 @@ public class Chapter07 {
     }
 
     public long stringToScore(String string, boolean ignoreCase) {
-        if (ignoreCase){
+        if (ignoreCase) {
             string = string.toLowerCase();
         }
 
         List<Integer> pieces = new ArrayList<Integer>();
         for (int i = 0; i < Math.min(string.length(), 6); i++) {
-            pieces.add((int)string.charAt(i));
+            pieces.add((int) string.charAt(i));
         }
-        while (pieces.size() < 6){
+        while (pieces.size() < 6) {
             pieces.add(-1);
         }
 
@@ -571,14 +564,14 @@ public class Chapter07 {
         return score * 2 + (string.length() > 6 ? 1 : 0);
     }
 
-    public long stringToScoreGeneric(String string, Map<Integer,Integer> mapping) {
-        int length = (int)(52 / (Math.log(mapping.size()) / Math.log(2)));
+    public long stringToScoreGeneric(String string, Map<Integer, Integer> mapping) {
+        int length = (int) (52 / (Math.log(mapping.size()) / Math.log(2)));
 
         List<Integer> pieces = new ArrayList<Integer>();
         for (int i = 0; i < Math.min(string.length(), length); i++) {
-            pieces.add((int)string.charAt(i));
+            pieces.add((int) string.charAt(i));
         }
-        while (pieces.size() < 6){
+        while (pieces.size() < 6) {
             pieces.add(-1);
         }
 
@@ -591,20 +584,20 @@ public class Chapter07 {
         return score * 2 + (string.length() > 6 ? 1 : 0);
     }
 
-    public long zaddString(Jedis conn, String name, Map<String,String> values) {
-        Map<Double,String> pieces = new HashMap<Double,String>(values.size());
-        for (Map.Entry<String,String> entry : values.entrySet()) {
-            pieces.put((double)stringToScore(entry.getValue()), entry.getKey());
+    public long zaddString(Jedis conn, String name, Map<String, String> values) {
+        Map<Double, String> pieces = new HashMap<Double, String>(values.size());
+        for (Map.Entry<String, String> entry : values.entrySet()) {
+            pieces.put((double) stringToScore(entry.getValue()), entry.getKey());
         }
 
         return conn.zadd(name, pieces);
     }
 
-    private Map<Ecpm,Double> AVERAGE_PER_1K = new HashMap<Ecpm,Double>();
+    private Map<Ecpm, Double> AVERAGE_PER_1K = new HashMap<Ecpm, Double>();
+
     public void indexAd(
-        Jedis conn, String id, String[] locations,
-        String content, Ecpm type, double value)
-    {
+            Jedis conn, String id, String[] locations,
+            String content, Ecpm type, double value) {
         Transaction trans = conn.multi();
 
         for (String location : locations) {
@@ -623,14 +616,14 @@ public class Chapter07 {
         trans.hset("type:", id, type.name().toLowerCase());
         trans.zadd("idx:ad:value:", rvalue, id);
         trans.zadd("ad:base_value:", value, id);
-        for (String word : words){
+        for (String word : words) {
             trans.sadd("terms:" + id, word);
         }
         trans.exec();
     }
 
     public double toEcpm(Ecpm type, double views, double avg, double value) {
-        switch(type){
+        switch (type) {
             case CPC:
             case CPA:
                 return 1000. * value * avg / views;
@@ -641,61 +634,59 @@ public class Chapter07 {
     }
 
     @SuppressWarnings("unchecked")
-    public Pair<Long,String> targetAds(
-        Jedis conn, String[] locations, String content)
-    {
+    public Pair<Long, String> targetAds(
+            Jedis conn, String[] locations, String content) {
         Transaction trans = conn.multi();
 
         String matchedAds = matchLocation(trans, locations);
 
         String baseEcpm = zintersect(
-            trans, 30, new ZParams().weights(0, 1), matchedAds, "ad:value:");
+                trans, 30, new ZParams().weights(0, 1), matchedAds, "ad:value:");
 
-        Pair<Set<String>,String> result = finishScoring(
-            trans, matchedAds, baseEcpm, content);
+        Pair<Set<String>, String> result = finishScoring(
+                trans, matchedAds, baseEcpm, content);
 
         trans.incr("ads:served:");
         trans.zrevrange("idx:" + result.getValue1(), 0, 0);
 
         List<Object> response = trans.exec();
-        long targetId = (Long)response.get(response.size() - 2);
-        Set<String> targetedAds = (Set<String>)response.get(response.size() - 1);
+        long targetId = (Long) response.get(response.size() - 2);
+        Set<String> targetedAds = (Set<String>) response.get(response.size() - 1);
 
-        if (targetedAds.size() == 0){
-            return new Pair<Long,String>(null, null);
+        if (targetedAds.size() == 0) {
+            return new Pair<Long, String>(null, null);
         }
 
         String adId = targetedAds.iterator().next();
         recordTargetingResult(conn, targetId, adId, result.getValue0());
 
-        return new Pair<Long,String>(targetId, adId);
+        return new Pair<Long, String>(targetId, adId);
     }
 
     public String matchLocation(Transaction trans, String[] locations) {
         String[] required = new String[locations.length];
-        for(int i = 0; i < locations.length; i++){
+        for (int i = 0; i < locations.length; i++) {
             required[i] = "req:" + locations[i];
         }
         return union(trans, 300, required);
     }
 
-    public Pair<Set<String>,String> finishScoring(
-        Transaction trans, String matched, String base, String content)
-    {
-        Map<String,Integer> bonusEcpm = new HashMap<String,Integer>();
+    public Pair<Set<String>, String> finishScoring(
+            Transaction trans, String matched, String base, String content) {
+        Map<String, Integer> bonusEcpm = new HashMap<String, Integer>();
         Set<String> words = tokenize(content);
-        for (String word : words){
+        for (String word : words) {
             String wordBonus = zintersect(
-                trans, 30, new ZParams().weights(0, 1), matched, word);
+                    trans, 30, new ZParams().weights(0, 1), matched, word);
             bonusEcpm.put(wordBonus, 1);
         }
 
-        if (bonusEcpm.size() > 0){
+        if (bonusEcpm.size() > 0) {
 
             String[] keys = new String[bonusEcpm.size()];
             int[] weights = new int[bonusEcpm.size()];
             int index = 0;
-            for (Map.Entry<String,Integer> bonus : bonusEcpm.entrySet()){
+            for (Map.Entry<String, Integer> bonus : bonusEcpm.entrySet()) {
                 keys[index] = bonus.getKey();
                 weights[index] = bonus.getValue();
                 index++;
@@ -708,15 +699,14 @@ public class Chapter07 {
             String maximum = zunion(trans, 30, maxParams, keys);
 
             String result = zunion(
-                trans, 30, new ZParams().weights(2, 1, 1), base, minimum, maximum);
-            return new Pair<Set<String>,String>(words, result);
+                    trans, 30, new ZParams().weights(2, 1, 1), base, minimum, maximum);
+            return new Pair<Set<String>, String>(words, result);
         }
-        return new Pair<Set<String>,String>(words, base);
+        return new Pair<Set<String>, String>(words, base);
     }
 
     public void recordTargetingResult(
-        Jedis conn, long targetId, String adId, Set<String> words)
-    {
+            Jedis conn, long targetId, String adId, Set<String> words) {
         Set<String> terms = conn.smembers("terms:" + adId);
         String type = conn.hget("type:", adId);
 
@@ -737,8 +727,8 @@ public class Chapter07 {
         trans.zincrby("views:" + adId, 1, "");
 
         List<Object> response = trans.exec();
-        double views = (Double)response.get(response.size() - 1);
-        if ((views % 100) == 0){
+        double views = (Double) response.get(response.size() - 1);
+        if ((views % 100) == 0) {
             updateCpms(conn, adId);
         }
     }
@@ -750,9 +740,9 @@ public class Chapter07 {
         trans.zscore("ad:base_value:", adId);
         trans.smembers("terms:" + adId);
         List<Object> response = trans.exec();
-        String type = (String)response.get(0);
-        Double baseValue = (Double)response.get(1);
-        Set<String> words = (Set<String>)response.get(2);
+        String type = (String) response.get(0);
+        Double baseValue = (Double) response.get(1);
+        Set<String> words = (Set<String>) response.get(2);
 
         String which = "clicks";
         Ecpm ecpm = Enum.valueOf(Ecpm.class, type.toUpperCase());
@@ -764,13 +754,13 @@ public class Chapter07 {
         trans.get("type:" + type + ":views:");
         trans.get("type:" + type + ':' + which);
         response = trans.exec();
-        String typeViews = (String)response.get(0);
-        String typeClicks = (String)response.get(1);
+        String typeViews = (String) response.get(0);
+        String typeClicks = (String) response.get(1);
 
         AVERAGE_PER_1K.put(ecpm,
-            1000. *
-            Integer.valueOf(typeClicks != null ? typeClicks : "1") /
-            Integer.valueOf(typeViews != null ? typeViews : "1"));
+                1000. *
+                        Integer.valueOf(typeClicks != null ? typeClicks : "1") /
+                        Integer.valueOf(typeViews != null ? typeViews : "1"));
 
         if (Ecpm.CPM.equals(ecpm)) {
             return;
@@ -783,19 +773,19 @@ public class Chapter07 {
         trans.zscore(viewKey, "");
         trans.zscore(clickKey, "");
         response = trans.exec();
-        Double adViews = (Double)response.get(0);
-        Double adClicks = (Double)response.get(1);
+        Double adViews = (Double) response.get(0);
+        Double adClicks = (Double) response.get(1);
 
         double adEcpm = 0;
-        if (adClicks == null || adClicks < 1){
+        if (adClicks == null || adClicks < 1) {
             Double score = conn.zscore("idx:ad:value:", adId);
             adEcpm = score != null ? score.doubleValue() : 0;
-        }else{
+        } else {
             adEcpm = toEcpm(
-                ecpm,
-                adViews != null ? adViews.doubleValue() : 1,
-                adClicks != null ? adClicks.doubleValue() : 0,
-                baseValue);
+                    ecpm,
+                    adViews != null ? adViews.doubleValue() : 1,
+                    adClicks != null ? adClicks.doubleValue() : 0,
+                    baseValue);
             conn.zadd("idx:ad:value:", adEcpm, adId);
         }
         for (String word : words) {
@@ -803,18 +793,18 @@ public class Chapter07 {
             trans.zscore(viewKey, word);
             trans.zscore(clickKey, word);
             response = trans.exec();
-            Double views = (Double)response.get(0);
-            Double clicks = (Double)response.get(1);
+            Double views = (Double) response.get(0);
+            Double clicks = (Double) response.get(1);
 
-            if (clicks == null || clicks < 1){
+            if (clicks == null || clicks < 1) {
                 continue;
             }
 
             double wordEcpm = toEcpm(
-                ecpm,
-                views != null ? views.doubleValue() : 1,
-                clicks != null ? clicks.doubleValue() : 0,
-                baseValue);
+                    ecpm,
+                    views != null ? views.doubleValue() : 1,
+                    clicks != null ? clicks.doubleValue() : 0,
+                    baseValue);
             double bonus = wordEcpm - adEcpm;
             conn.zadd("idx:" + word, bonus, adId);
         }
@@ -839,7 +829,7 @@ public class Chapter07 {
 
         if (action && Ecpm.CPA.equals(ecpm)) {
             trans.incr("type:" + type + ":actions:");
-        }else{
+        } else {
             trans.incr("type:" + type + ":clicks:");
         }
 
@@ -859,14 +849,14 @@ public class Chapter07 {
     public boolean isQualified(Jedis conn, String jobId, String... candidateSkills) {
         String temp = UUID.randomUUID().toString();
         Transaction trans = conn.multi();
-        for(String skill : candidateSkills) {
+        for (String skill : candidateSkills) {
             trans.sadd(temp, skill);
         }
         trans.expire(temp, 5);
         trans.sdiff("job:" + jobId, temp);
 
         List<Object> response = trans.exec();
-        Set<String> diff = (Set<String>)response.get(response.size() - 1);
+        Set<String> diff = (Set<String>) response.get(response.size() - 1);
         return diff.size() == 0;
     }
 
@@ -891,9 +881,9 @@ public class Chapter07 {
 
         Transaction trans = conn.multi();
         String jobScores = zunion(
-            trans, 30, new ZParams().weights(weights), keys);
+                trans, 30, new ZParams().weights(weights), keys);
         String finalResult = zintersect(
-            trans, 30, new ZParams().weights(-1, 1), jobScores, "jobs:req");
+                trans, 30, new ZParams().weights(-1, 1), jobScores, "jobs:req");
         trans.exec();
 
         return conn.zrangeByScore("idx:" + finalResult, 0, 0);
@@ -917,8 +907,7 @@ public class Chapter07 {
     }
 
     public class WordScore
-        implements Comparable<WordScore>
-    {
+            implements Comparable<WordScore> {
         public final String word;
         public final long score;
 
@@ -928,10 +917,10 @@ public class Chapter07 {
         }
 
         public boolean equals(Object other) {
-            if (!(other instanceof WordScore)){
+            if (!(other instanceof WordScore)) {
                 return false;
             }
-            WordScore t2 = (WordScore)other;
+            WordScore t2 = (WordScore) other;
             return this.word.equals(t2.word) && this.score == t2.score;
         }
 
@@ -944,7 +933,7 @@ public class Chapter07 {
             return this.word.compareTo(other.word);
         }
 
-        public String toString(){
+        public String toString() {
             return word + '=' + score;
         }
     }
